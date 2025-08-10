@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Namphon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=IBM+Plex+Sans+Thai:wght@300;400&display=swap" rel="stylesheet">
+    
+    <style>
+    :root {
+        --pink-glow: #ff92ce;
+        --purple-glow: #e8aeff;
+        --dark-bg: #1a1122;
+        --text-color: #e0e0e0;
+        --accent-color: #ffffff;
+        --font-primary: 'Orbitron', sans-serif;
+        --font-secondary: 'IBM Plex Sans Thai', sans-serif;
+        --background-gradient-start: #ff92ce;
+        --background-gradient-end: #e8aeff;
+        --input-border-color: #ff92ce;
+        --input-focus-border-color: #e8aeff;
+        --button-bg-gradient-start: #ff92ce;
+        --button-bg-gradient-end: #e8aeff;
+        --card-bg: rgba(255 146 206 / 0.15);
+        --card-shadow: rgba(232, 174, 255, 0.25);
+        --heart-color: #ff92cecc;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: var(--font-secondary);
+        background-color: var(--dark-bg);
+        color: var(--text-color);
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #cursor-light {
+        position: fixed;
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(174, 136, 255, 0.15) 0%, rgba(255, 122, 198, 0.05) 50%, rgba(26, 17, 34, 0) 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        transition: all 0.1s ease-out;
+        z-index: 1;
+    }
+
+    .heart-particle {
+        position: absolute;
+        color: var(--pink-glow);
+        font-size: 20px;
+        opacity: 0;
+        animation: flyAndFade 4s ease-out forwards;
+        pointer-events: none;
+        text-shadow: 0 0 10px var(--pink-glow);
+        z-index: 2;
+    }
+
+    @keyframes flyAndFade {
+        0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
+        100% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(1.5); opacity: 0; }
+    }
+
+    #lock-screen-container {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+        background-color: var(--dark-bg);
+        padding: 20px; 
+    }
+
+    #lock-screen-container.unlocked {
+        opacity: 0;
+        transform: scale(1.5);
+        pointer-events: none;
+    }
+
+    .orb-container {
+        width: 400px;
+        height: 400px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .orb {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.2);
+        box-shadow: 
+            inset 0 0 50px rgba(174, 136, 255, 0.3),
+            0 0 50px rgba(255, 122, 198, 0.3);
+        animation: pulse 5s ease-in-out infinite;
+    }
+
+    .orb::before, .orb::after {
+        content: '';
+        position: absolute;
+        inset: -5px;
+        border-radius: 50%;
+        border: 1px solid;
+        animation: rotate 10s linear infinite;
+    }
+    .orb::before { border-color: var(--purple-glow) transparent; }
+    .orb::after { border-color: transparent var(--pink-glow); animation-direction: reverse; }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(0.98); box-shadow: inset 0 0 50px rgba(174, 136, 255, 0.3), 0 0 50px rgba(255, 122, 198, 0.3); }
+        50% { transform: scale(1.02); box-shadow: inset 0 0 60px rgba(174, 136, 255, 0.5), 0 0 60px rgba(255, 122, 198, 0.5); }
+    }
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .lock-title {
+        font-family: var(--font-primary);
+        font-size: 2em;
+        color: var(--accent-color);
+        text-shadow: 0 0 10px var(--pink-glow);
+        margin-bottom: 8px;
+        letter-spacing: 3px;
+        text-align: center;
+    }
+    
+    .lock-subtitle {
+        font-family: var(--font-secondary);
+        font-size: 1.1em;
+        color: var(--text-color);
+        height: 1.2em; 
+        margin-bottom: 25px;
+        text-align: center; 
+    }
+    
+    #pin-inputs {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+        z-index: 5;
+    }
+
+    .pin-input-field {
+        width: 50px;
+        height: 60px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        text-align: center;
+        font-size: 2em;
+        font-family: var(--font-primary);
+        color: var(--accent-color);
+        outline: none;
+        transition: all 0.2s ease;
+    }
+    .pin-input-field:focus {
+        background: rgba(255,255,255,0.1);
+        border-color: var(--pink-glow);
+        transform: scale(1.1);
+        box-shadow: 0 0 15px var(--pink-glow);
+    }
+
+    #login-button {
+        z-index: 5;
+        font-family: var(--font-primary);
+        font-size: 1.1em;
+        padding: 12px 40px;
+        background: transparent;
+        border: 2px solid var(--purple-glow);
+        color: var(--accent-color);
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-shadow: 0 0 5px var(--purple-glow);
+        box-shadow: inset 0 0 10px rgba(174, 136, 255, 0.4), 0 0 10px rgba(174, 136, 255, 0.4);
+    }
+    #login-button:hover {
+        background-color: var(--purple-glow);
+        color: var(--dark-bg);
+        box-shadow: 0 0 25px var(--purple-glow);
+        transform: scale(1.05);
+    }
+
+    #error-text {
+        position: absolute;
+        bottom: -40px;
+        color: var(--pink-glow);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    #error-text.visible {
+        opacity: 1;
+    }
+
+    #unlocked-story-container {
+        position: absolute;
+        inset: 0;
+        z-index: 50;
+        opacity: 0;
+        transform: scale(0.9);
+        transition: opacity 0.8s ease-in-out 0.5s, transform 0.8s ease-in-out 0.5s;
+        pointer-events: none;
+        overflow: hidden; 
+    }
+
+    #unlocked-story-container.visible {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: all;
+    }
+    
+    #story-wrapper {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        transition: transform 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    .story-slide {
+        width: 100vw;
+        height: 100vh;
+        flex-shrink: 0;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-size: contain;  
+        background-repeat: no-repeat; 
+        background-position: center;
+    }
+
+    .story-slide::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(26, 17, 34, 0.6);
+        backdrop-filter: blur(3px);
+    }
+
+    .slide-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 20px;
+        max-width: 800px;
+        width: 90%; 
+        background: rgba(0,0,0,0.3);
+        border-radius: 15px;
+    }
+
+    .slide-content h2 {
+        font-family: var(--font-primary);
+        font-size: 3.5em;
+        color: var(--accent-color);
+        margin-bottom: 20px;
+        text-shadow: 0 0 15px var(--pink-glow);
+    }
+
+    .slide-content p {
+        font-size: 1.5em;
+        line-height: 1.7;
+        color: var(--text-color);
+        font-weight: 300;
+    }
+
+    .story-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        font-size: 4em;
+        cursor: pointer;
+        color: rgba(255,255,255,0.5);
+        transition: all 0.3s ease;
+        text-shadow: 0 0 10px black;
+        user-select: none; 
+    }
+    .story-nav:hover {
+        color: var(--accent-color);
+        transform: translateY(-50%) scale(1.2);
+        text-shadow: 0 0 15px var(--pink-glow);
+    }
+
+    #prev-slide { left: 30px; }
+    #next-slide { right: 30px; }
+
+    @media (max-width: 768px) {
+        .orb-container {
+            width: 300px; 
+            height: 300px;
+        }
+
+        .slide-content h2 {
+            font-size: 2.5em; 
+        }
+        .slide-content p {
+            font-size: 1.2em; 
+            line-height: 1.6;
+        }
+        .story-nav {
+            font-size: 3em; 
+        }
+        #prev-slide { left: 20px; }
+        #next-slide { right: 20px; }
+    }
+
+    @media (max-width: 480px) {
+        #cursor-light {
+             display: none; 
+        }
+        .orb-container {
+            width: 250px; 
+            height: 250px;
+        }
+        .lock-title {
+            font-size: 1.8em;
+        }
+        .lock-subtitle {
+            font-size: 1em;
+        }
+        .pin-input-field {
+            width: 40px;
+            height: 50px;
+            font-size: 1.8em;
+        }
+        #pin-inputs {
+            gap: 10px;
+        }
+
+        .slide-content {
+            padding: 15px; 
+        }
+        .slide-content h2 {
+            font-size: 2em; 
+        }
+        .slide-content p {
+            font-size: 1em; 
+        }
+        .story-nav {
+            font-size: 2.5em; 
+        }
+        #prev-slide { left: 15px; }
+        #next-slide { right: 15px; }
+    }
+
+</style>
+</head>
+<body>
+
+    <div id="cursor-light"></div>
+    <div id="heart-emitter"></div>
+
+    <div id="lock-screen-container">
+        <div class="orb-container">
+            <div class="orb"></div>
+            <h1 class="lock-title">ปลดล็อคดูสิ</h1>
+            <p class="lock-subtitle" id="subtitle-text"></p>
+            <div id="pin-inputs">
+                <input type="text" class="pin-input-field" maxlength="1">
+                <input type="text" class="pin-input-field" maxlength="1">
+                <input type="text" class="pin-input-field" maxlength="1">
+                <input type="text" class="pin-input-field" maxlength="1">
+            </div>
+            <button id="login-button">Login</button>
+            <p id="error-text">รหัสผิดนะจร๊ะ</p>
+        </div>
+    </div>
+
+   <div id="unlocked-story-container">
+    <div id="story-wrapper">
+        
+        <section class="story-slide" style="background-image: url('slide1.jpg');">
+            <div class="slide-content">
+                <h2>เด็กน้อยที่น่ารัก</h2>
+                <p>รักเบบี๋มากๆนะคะ รักที่สุดเลย</p>
+            </div>
+        </section>
+        
+        <section class="story-slide" style="background-image: url('slide2.jpg');">
+            <div class="slide-content">
+                <h2>หลับบบบบบ</h2>
+                <p>เด็กอะไรขนาดหลับยังน่ารัก ตัวเล็กของเค้าาาา</p>
+            </div>
+        </section>
+
+        <section class="story-slide" style="background-image: url('slide3.jpg');">
+            <div class="slide-content">
+                <h2>วันเกิด</h2>
+                <p>แหะๆ ทำตัวน่ารักแต่มีพิรุธนะเด็กน้อยยย</p>
+            </div>
+        </section>
+        
+        <section class="story-slide" style="background-image: url('slide4.jpg');">
+            <div class="slide-content">
+                <h2>เด็กแว่น</h2>
+                <p>ชอบใส่จังฟีลเตอร์หมา ฟีลเตอร์อื่นก็น่ารักก</p>
+            </div>
+        </section>
+
+        <section class="story-slide" style="background-image: url('slide5.jpg');">
+            <div class="slide-content">
+                <h2>หมาน้อย</h2>
+                <p>พูดถึงก็มาเลยฟีลเตอร์หมา</p>
+            </div>
+        </section>
+
+        <section class="story-slide" style="background-image: url('slide6.jpg');">
+            <div class="slide-content">
+                <h2>มีแค่เธอ</h2>
+                <p>มีแค่เธอก็พอแล้ว รักนะครับเบบี๋ของเค้า</p>
+            </div>
+        </section>
+        
+    </div>
+    <div class="story-nav" id="prev-slide">‹</div>
+    <div class="story-nav" id="next-slide">›</div>
+</div>
+
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const CORRECT_PIN = '1008'; 
+
+        const lockScreen = document.getElementById('lock-screen-container');
+        const pinInputs = document.querySelectorAll('.pin-input-field');
+        const loginButton = document.getElementById('login-button');
+        const errorText = document.getElementById('error-text');
+        const subtitleText = document.getElementById('subtitle-text');
+
+        const storyContainer = document.getElementById('unlocked-story-container');
+        const storyWrapper = document.getElementById('story-wrapper');
+        const slides = document.querySelectorAll('.story-slide');
+        const prevBtn = document.getElementById('prev-slide');
+        const nextBtn = document.getElementById('next-slide');
+
+        const cursorLight = document.getElementById('cursor-light');
+        const heartEmitter = document.getElementById('heart-emitter');
+
+        let currentSlide = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            cursorLight.style.left = e.clientX + 'px';
+            cursorLight.style.top = e.clientY + 'px';
+        });
+
+        function typeEffect(element, text, speed) {
+            let i = 0;
+            element.innerHTML = "";
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            type();
+        }
+        typeEffect(subtitleText, 'รหัสคือวันเดือนเกิดแฟนที่น่ารักของน้ำฝน', 100);
+
+        setInterval(() => {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            heart.innerHTML = '♥';
+            
+            const startX = Math.random() * window.innerWidth;
+            const startY = Math.random() * window.innerHeight;
+            heart.style.left = startX + 'px';
+            heart.style.top = startY + 'px';
+
+            const endX = (Math.random() - 0.5) * 400;
+            const endY = (Math.random() - 0.5) * 400;
+            heart.style.setProperty('--tx', endX + 'px');
+            heart.style.setProperty('--ty', endY + 'px');
+
+            heartEmitter.appendChild(heart);
+
+            setTimeout(() => heart.remove(), 4000);
+        }, 200);
+
+        pinInputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/[^0-9]/g, '');
+                if (input.value && index < pinInputs.length - 1) {
+                    pinInputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && index > 0) {
+                    pinInputs[index - 1].focus();
+                }
+                 if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+        });
+        
+        function handleLogin() {
+            const enteredPin = Array.from(pinInputs).map(input => input.value).join('');
+            if (enteredPin === CORRECT_PIN) {
+                lockScreen.classList.add('unlocked');
+                storyContainer.classList.add('visible');
+            } else {
+                errorText.classList.add('visible');
+                pinInputs.forEach(input => input.value = '');
+                pinInputs[0].focus();
+                setTimeout(() => errorText.classList.remove('visible'), 2000);
+            }
+        }
+        loginButton.addEventListener('click', handleLogin);
+
+        function updateSlider() {
+            storyWrapper.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            prevBtn.style.display = currentSlide === 0 ? 'none' : 'block';
+            nextBtn.style.display = currentSlide === slides.length - 1 ? 'none' : 'block';
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlider();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlider();
+            }
+        });
+        updateSlider();
+
+    });
+    </script>
+</body>
+</html>
